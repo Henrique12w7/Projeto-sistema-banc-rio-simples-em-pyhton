@@ -1,0 +1,257 @@
+import tkinter as tk
+
+class ContaBancaria:
+    def __init__(self, nome, cpf, senha, saldo_inicial=0):
+        self.nome = nome
+        self.cpf = cpf
+        self.senha = senha
+        self.saldo = saldo_inicial
+
+    def depositar(self, valor, senha):
+        if valor > 0 and senha == self.senha:
+            self.saldo += valor
+            return f"Depósito de R${valor} realizado com sucesso."
+        elif senha != self.senha:
+            return "Senha incorreta."
+        else:
+            return "Valor de depósito inválido."
+
+    def transferir_saldo(self, valor, senha, conta_destino):
+        if valor > 0 and valor <= self.saldo and senha == self.senha:
+            self.saldo -= valor
+            conta_destino.saldo += valor
+            return f"Transferência de R${valor} para {conta_destino.nome} realizada com sucesso."
+        elif senha != self.senha:
+            return "Senha incorreta."
+        else:
+            return "Transferência não autorizada. Saldo insuficiente ou valor inválido."
+
+    def sacar(self, valor, senha):
+        if valor > 0 and valor <= self.saldo and senha == self.senha:
+            self.saldo -= valor
+            return f"Saque de R${valor} realizado com sucesso."
+        elif senha != self.senha:
+            return "Senha incorreta."
+        else:
+            return "Saque não autorizado. Saldo insuficiente ou valor inválido."
+
+    def verificar_saldo(self):
+        return f"Saldo disponível para {self.nome}: R${self.saldo}"
+
+def verificar_saldo():
+    nome = entry_nome.get()
+    for conta in contas:
+        if conta.nome == nome:
+            mensagem = conta.verificar_saldo()
+            label_info["text"] = mensagem
+            break
+    else:
+        label_info["text"] = "Conta não encontrada."
+
+def listar_contas():
+    lista_contas.delete(0, tk.END)  # Limpa a lista de contas
+
+    for conta in contas:
+        lista_contas.insert(tk.END, f"Nome: {conta.nome}, Saldo: R${conta.saldo}")
+
+    if lista_contas.size() == 0:
+        label_info["text"] = "Nenhuma conta encontrada."
+    else:
+        label_info["text"] = "Contas listadas."
+
+def excluir_conta():
+    nome = entry_nome.get()
+    cpf = entry_cpf.get()
+    senha = entry_senha.get()
+    for conta in contas:
+        if conta.nome == nome and conta.cpf == cpf and conta.senha == senha:
+            contas.remove(conta)
+            label_info["text"] = f"Conta {conta.nome} excluída com sucesso."
+            listar_contas()
+            return
+    label_info["text"] = "Conta não encontrada, CPF ou senha incorretos."
+
+def criar_conta():
+    nome = entry_nome.get()
+    cpf = entry_cpf.get()
+    senha = entry_senha.get()
+    saldo_inicial = float(entry_saldo.get())
+    
+    if nome_existe(nome):
+        label_info["text"] = "Nome de conta já existe."
+    else:
+        conta = ContaBancaria(nome, cpf, senha, saldo_inicial)
+        contas.append(conta)
+        label_info["text"] = f"Conta criada para {conta.nome} com sucesso."
+
+def nome_existe(nome):
+    for conta in contas:
+        if conta.nome == nome:
+            return True
+    return False
+
+def depositar():
+    nome = entry_nome.get()
+    senha = entry_senha.get()
+    valor_str = entry_valor.get()
+
+    if not valor_str:
+        label_info["text"] = "Digite um valor válido."
+        return
+
+    valor = float(valor_str)
+
+    for conta in contas:
+        if conta.nome == nome:
+            mensagem = conta.depositar(valor, senha)
+            label_info["text"] = mensagem
+            break
+    else:
+        label_info["text"] = "Conta não encontrada."
+
+def transferir():
+    nome_origem = entry_nome.get()
+    senha = entry_senha.get()
+    valor_str = entry_valor.get()
+    nome_destino = entry_nome_destino.get()
+
+    if not valor_str:
+        label_info["text"] = "Digite um valor válido."
+        return
+
+    valor = float(valor_str)
+
+    conta_origem = None
+    conta_destino = None
+
+    for conta in contas:
+        if conta.nome == nome_origem:
+            conta_origem = conta
+        elif conta.nome == nome_destino:
+            conta_destino = conta
+
+    if conta_origem is None:
+        label_info["text"] = "Conta de origem não encontrada."
+    elif conta_destino is None:
+        label_info["text"] = "Conta de destino não encontrada."
+    else:
+        mensagem = conta_origem.transferir_saldo(valor, senha, conta_destino)
+        label_info["text"] = mensagem
+
+
+def sacar():
+    nome = entry_nome.get()
+    senha = entry_senha.get()
+    valor_str = entry_valor.get()
+
+    if not valor_str:
+        label_info["text"] = "Digite um valor válido."
+        return
+
+    valor = float(valor_str)
+
+    for conta in contas:
+        if conta.nome == nome:
+            mensagem = conta.sacar(valor, senha)
+            label_info["text"] = mensagem
+            break
+    else:
+        label_info["text"] = "Conta não encontrada."
+
+# Criar uma lista vazia de cpfs
+cpfs = []
+
+# Função para verificar se um cpf já existe
+def cpf_existe(cpf):
+    if cpf in cpfs:
+        return True
+    return False
+
+# Função para criar uma nova conta
+def criar_conta():
+    nome = entry_nome.get()
+    cpf = entry_cpf.get()
+    senha = entry_senha.get()
+    saldo_inicial = float(entry_saldo.get())
+    
+    if nome_existe(nome):
+        label_info["text"] = "Nome de conta já existe."
+    elif cpf_existe(cpf):
+        label_info["text"] = "CPF já cadastrado."
+    else:
+        conta = ContaBancaria(nome, cpf, senha, saldo_inicial)
+        contas.append(conta)
+        cpfs.append(cpf)
+        label_info["text"] = f"Conta criada para {conta.nome} com sucesso."
+
+        
+# Criação da interface gráfica
+contas = []
+
+root = tk.Tk()
+root.title("Sistema Bancário")
+
+frame_entrada = tk.Frame(root)
+frame_entrada.grid(row=0, column=0, padx=20, pady=20)
+
+frame_opcoes = tk.Frame(root)
+frame_opcoes.grid(row=1, column=0, padx=20, pady=20)
+
+frame_info = tk.Frame(root)
+frame_info.grid(row=2, column=0, padx=20, pady=20)
+
+root.grid_columnconfigure(1, weight=1)
+
+label_nome = tk.Label(frame_entrada, text="Nome:")
+label_cpf = tk.Label(frame_entrada, text="CPF:")
+label_senha = tk.Label(frame_entrada, text="Senha:")
+label_saldo = tk.Label(frame_entrada, text="Saldo:")
+label_valor = tk.Label(frame_entrada, text="Valor:")
+
+entry_nome = tk.Entry(frame_entrada)
+entry_cpf = tk.Entry(frame_entrada)
+entry_senha = tk.Entry(frame_entrada, show="*")
+entry_saldo = tk.Entry(frame_entrada)
+entry_valor = tk.Entry(frame_entrada)
+
+label_nome.grid(row=0, column=0, padx=5, pady=5)
+label_cpf.grid(row=1, column=0, padx=5, pady=5)
+label_senha.grid(row=2, column=0, padx=5, pady=5)
+label_saldo.grid(row=3, column=0, padx=5, pady=5)
+label_valor.grid(row=4, column=0, padx=5, pady=5)
+
+entry_nome.grid(row=0, column=1, padx=5, pady=5)
+entry_cpf.grid(row=1, column=1, padx=5, pady=5)
+entry_senha.grid(row=2, column=1, padx=5, pady=5)
+entry_saldo.grid(row=3, column=1, padx=5, pady=5)
+entry_valor.grid(row=4, column=1, padx=5, pady=5)
+entry_nome_destino = tk.Entry(frame_entrada)
+entry_nome_destino.grid(row=5, column=1, padx=5, pady=5)
+label_nome_destino = tk.Label(frame_entrada, text="Conta Destino:")
+label_nome_destino.grid(row=5, column=0, padx=5, pady=5)
+
+botao_criar_conta = tk.Button(frame_opcoes, text="Criar Conta", command=criar_conta)
+botao_depositar = tk.Button(frame_opcoes, text="Depositar", command=depositar)
+botao_sacar = tk.Button(frame_opcoes, text="Sacar", command=sacar)
+botao_listar_contas = tk.Button(frame_opcoes, text="Listar Contas", command=listar_contas)
+botao_excluir_conta = tk.Button(frame_opcoes, text="Excluir Conta", command=excluir_conta)
+botao_verificar_saldo = tk.Button(frame_opcoes, text="Verificar Saldo", command=verificar_saldo)
+botao_sair = tk.Button(frame_opcoes, text="Sair", command=root.destroy)
+botao_transferir = tk.Button(frame_opcoes, text="Transferir", command=transferir)
+
+botao_transferir.grid(row=0, column=3, padx=5, pady=5)
+botao_criar_conta.grid(row=0, column=0, padx=5, pady=5)
+botao_depositar.grid(row=0, column=1, padx=5, pady=5)
+botao_sacar.grid(row=0, column=2, padx=5, pady=5)
+botao_listar_contas.grid(row=1, column=0, padx=5, pady=5)
+botao_excluir_conta.grid(row=1, column=1, padx=5, pady=5)
+botao_verificar_saldo.grid(row=1, column=2, padx=5, pady=5)
+botao_sair.grid(row=1, column=3, padx=5, pady=5)
+
+label_info = tk.Label(frame_info, text="", fg="red")
+label_info.pack()
+
+lista_contas = tk.Listbox(frame_info)
+lista_contas.pack()
+
+root.mainloop()
